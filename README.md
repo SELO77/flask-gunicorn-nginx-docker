@@ -233,7 +233,10 @@ Percentage of the requests served within a certain time (ms)
 
 ```
 $ gunicorn -w 3 --access-logfile - -k gevent wsgi:app -b 0.0.0.0:5000
-$ gunicorn wsgi:app
+```
+
+```
+$ gunicorn --config gunicorn_config.py wsgi:app
 ```
 
 
