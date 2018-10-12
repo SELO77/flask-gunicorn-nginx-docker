@@ -1,7 +1,8 @@
 import time
-import requests
 
+import requests
 from flask import request
+
 from app import route
 
 

@@ -122,125 +122,81 @@ $ gunicorn -w 3 --threads 3 wsgi:app -b 0.0.0.0:5000
 [2018-10-09 19:30:57 +0900] [79370] [INFO] Booting worker with pid: 79370
 ```
 
-#### 3프로세스 3쓰레드 성능 측정 
-
-```
-$ gunicorn -w 3 wsgi:app -b 0.0.0.0:5000
-...
-$ ab -n 32 -c 16 127.0.0.1:5000/sleep/10
-This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
-Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
-Licensed to The Apache Software Foundation, http://www.apache.org/
-
-Benchmarking 127.0.0.1 (be patient).....done
-
-
-Server Software:        Werkzeug/0.14.1
-Server Hostname:        127.0.0.1
-Server Port:            5000
-
-Document Path:          /sleep/10
-Document Length:        19 bytes
-
-Concurrency Level:      16
-Time taken for tests:   20.031 seconds
-Complete requests:      32
-Failed requests:        0
-Total transferred:      5536 bytes
-HTML transferred:       608 bytes
-Requests per second:    1.60 [#/sec] (mean)
-Time per request:       10015.349 [ms] (mean)
-Time per request:       625.959 [ms] (mean, across all concurrent requests)
-Transfer rate:          0.27 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0    0   0.2      0       1
-Processing: 10006 10012   2.9  10012   10017
-Waiting:    10005 10011   2.8  10011   10017
-Total:      10006 10012   2.9  10012   10017
-
-Percentage of the requests served within a certain time (ms)
-  50%  10012
-  66%  10013
-  75%  10015
-  80%  10015
-  90%  10016
-  95%  10017
-  98%  10017
-  99%  10017
- 100%  10017 (longest request)
-SELO
-at ~/Project/flask-uwsgi-nginx-docker
-$ ab -n 32 -c 16 127.0.0.1:5000/sleep/10
-This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
-Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
-Licensed to The Apache Software Foundation, http://www.apache.org/
-
-Benchmarking 127.0.0.1 (be patient).....done
-
-
-Server Software:        gunicorn/19.9.0
-Server Hostname:        127.0.0.1
-Server Port:            5000
-
-Document Path:          /sleep/10
-Document Length:        19 bytes
-
-Concurrency Level:      16
-Time taken for tests:   40.023 seconds
-Complete requests:      32
-Failed requests:        0
-Total transferred:      5728 bytes
-HTML transferred:       608 bytes
-Requests per second:    0.80 [#/sec] (mean)
-Time per request:       20011.603 [ms] (mean)
-Time per request:       1250.725 [ms] (mean, across all concurrent requests)
-Transfer rate:          0.14 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0    0   0.3      0       1
-Processing: 10001 15946 4991.4  20007   20014
-Waiting:    10001 15945 4991.6  20006   20014
-Total:      10002 15946 4991.2  20007   20015
-
-Percentage of the requests served within a certain time (ms)
-  50%  20007
-  66%  20008
-  75%  20010
-  80%  20013
-  90%  20013
-  95%  20015
-  98%  20015
-  99%  20015
- 100%  20015 (longest request)
-```
 
 #### main configuration
+* bind
+* workers
+* worker_class
 * threads
 	* This setting only affects the Gthread worker type.
-
-* access-logfile
+* access_logfile
 	* `-` means log to stdout	
-
-* access-logformat
+* access_logformat
 	* default: `%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"`
-
-* error-logfile
+* error_logfile
 	* `-` means log to stderr 	
 
 
+
 ```
+# TCP SOCKET BINDING
 $ gunicorn -w 3 --access-logfile - -k gevent wsgi:app -b 0.0.0.0:5000
+...
+# UNIX SOCKET BINDING
+$ gunicorn -w 3 --access-logfile - -k gevent wsgi:app -b unix:/tmp/gunicorn.sock
+...
 ```
 
 ```
 $ gunicorn --config gunicorn_config.py wsgi:app
 ```
 
+## Nginx
+
+#### mac os var, etc path
+```
+/usr/local/etc/nginx/
+/usr/local/var/log/nginx
+```
+
+#### gunicorn-nginx.conf
+/usr/local/etc/nginx/servers/gunicorn-nginx.conf
+
+```
+upstream gunicorn-app {
+    server unix:/tmp/gunicorn.sock fail_timeout=0;
+}
+
+
+server {
+    listen 80;
+    server_name 0.0.0.0;
+
+    client_max_body_size 5M;
+
+    access_log /usr/local/var/log/nginx/access.log combined;
+    error_log /usr/local/var/log/nginx/error_log.log warn;
+
+    location / {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+
+        proxy_pass http://gunicorn-app;
+    }
+}
+```
+
+```
+sudo nginx -c [config_path]
+sudo nginx -s stop
+```
+
+
 
 ## REFERENCES
 [gunicorn vs uwsgi](http://devspark.tistory.com/entry/gunicorn-vs-uwsgi)
 [flask-concurrency-test](https://winterj.me/flask-concurrency-test/)
 
+
+## LOG
