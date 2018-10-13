@@ -1,5 +1,12 @@
 # flask gunicorn nginx docker
+Best practice of dockerizing flask gunicorn nginx.
 
+#### Concept
+Starting with the installation of flask application, stack it step by step with Bottom Up.
+
+PS. This following descriptions may not be accurate and in such cases pleas read and understand the code in the repository
+
+#### main app versions
 * python/3.6.4
 * nginx/1.15.5
 
@@ -199,8 +206,46 @@ sudo nginx -s stop
 
 ## Docker
 
+When I dockerize, first setup the tools and environment necessary for dockerizing image. Then, enter console of the container, check the configuration, and run each application to verify normal operation.
+Afrter verifcation is completed, write `CMD` or `ENTRYPOINT` COMMAND. 
 
 
+##### `Dockerfile`
+```dockerfile
+FROM python:3.6.6-jessie
+
+MAINTAINER cgex
+
+ENV SRVHOME=/srv/app
+
+WORKDIR $SRVHOME
+
+COPY ./ $SRVHOME
+
+RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor
+
+COPY ./nginx/nginx.conf /etc/nginx/
+COPY ./nginx/gunicorn-app.conf /etc/nginx/conf.d/
+
+COPY ./gunicorn_config.py /etc/gunicorn/
+
+COPY supervisord.conf /etc/supervisor/
+
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+EXPOSE 80
+EXPOSE 8080
+
+# for receving stream of log 
+RUN ln -sf /dev/stdout /var/log/nginx/access.log \
+    && ln -sf /dev/stderr /var/log/nginx/error.log
+
+CMD ["/usr/bin/supervisord"]
+
+```
 
 
 ## REFERENCES

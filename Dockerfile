@@ -30,6 +30,3 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log \
     && ln -sf /dev/stderr /var/log/nginx/error.log
 
 CMD ["/usr/bin/supervisord"]
-#CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/app.conf"]
-#CMD ["./entry_point.sh"]
-#CMD echo "HELLO WORLD"
