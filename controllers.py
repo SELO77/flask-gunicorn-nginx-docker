@@ -8,12 +8,12 @@ from app import route
 
 @route('/')
 def hello_world():
-    return "HELLO, WORLD!"
+    return "HELLO, WORLD!\n"
 
 
 @route('/ping')
 def ping():
-    return "PONG"
+    return "PONG\n"
 
 
 @route('/data', methods=['POST'])
@@ -49,4 +49,4 @@ def server_error():
 @route('/sleep/<int:seconds>')
 def sleep(seconds):
     time.sleep(seconds)
-    return 'END TO SLEEP FOR %s' % seconds
+    return 'END TO SLEEP FOR %s\n' % seconds
