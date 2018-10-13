@@ -1,6 +1,7 @@
 # flask gunicorn nginx docker
 
-python 3.6.4
+* python/3.6.4
+* nginx/1.15.5
 
 ## Flask Web Application
 
@@ -145,6 +146,10 @@ $ gunicorn -w 3 --access-logfile - -k gevent wsgi:app -b 0.0.0.0:5000
 # UNIX SOCKET BINDING
 $ gunicorn -w 3 --access-logfile - -k gevent wsgi:app -b unix:/tmp/gunicorn.sock
 ...
+
+# Check The Socket
+$ echo -e "GET /ping HTTP/1.0\r\n\r\n" | nc -q 2 -U /tmp/gunicorn.sock
+PONG
 ```
 
 ```
@@ -191,6 +196,10 @@ server {
 sudo nginx -c [config_path]
 sudo nginx -s stop
 ```
+
+## Docker
+
+
 
 
 
